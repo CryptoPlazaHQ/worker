@@ -81,3 +81,5 @@ test.db
 # Logs
 logs/
 *.log
+log.txt
+log1.md
