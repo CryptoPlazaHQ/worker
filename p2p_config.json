@@ -1,10 +1,11 @@
 {
-  "FIATS": ["ARS", "COP", "VES", "USD"],
+  "FIATS": ["ARS", "COP", "VES", "USD", "MXN"],
   "CRYPTOS_BY_FIAT": {
-    "ARS": ["USDT", "BTC", "ETH", "BNB"],
-    "COP": ["USDT", "BTC", "ETH"],
-    "VES": ["USDT", "BTC"],
-    "USD": ["USDT", "BTC", "ETH", "BNB", "USDC"]
+    "ARS": ["USDT", "BTC", "ETH", "BNB", "USDC", "FDUSD", "DAI", "DOGE", "ADA", "XRP", "WLD", "TRUMP", "1000CHEEMS", "TST", "SOL"],
+    "COP": ["USDT", "BTC", "ETH", "BNB", "USDC", "FDUSD", "DAI", "DOGE", "ADA", "XRP", "WLD", "TRUMP", "1000CHEEMS", "TST", "SOL"],
+    "VES": ["USDT", "BTC", "ETH", "BNB", "USDC", "FDUSD", "DOGE", "ADA", "XRP", "WLD", "TRUMP", "SOL"],
+    "USD": ["USDT", "BTC", "ETH", "BNB", "USDC", "FDUSD", "DAI", "TRUMP", "1000CHEEMS", "TST"],
+    "MXN": ["USDT", "BTC", "ETH", "BNB", "USDC", "FDUSD", "DOGE", "ADA", "XRP", "WLD", "TRUMP", "1000CHEEMS", "TST", "SOL"]
   },
   "DEFAULTS": {
     "BINANCE_P2P_TRADE_METHOD": "sell",
