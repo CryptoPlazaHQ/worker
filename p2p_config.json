@@ -6,12 +6,6 @@
     "VES": ["USDT", "BTC"],
     "USD": ["USDT", "BTC", "ETH", "BNB", "USDC"]
   },
-  "PAYMENT_METHODS_BY_FIAT": {
-    "ARS": ["Naranja X", "Mercadopago", "Lemon", "Belo", "Uala"],
-    "COP": ["Nequi", "Daviplata", "Bancolombia"],
-    "VES": ["PagoMovil", "Bank Transfer"],
-    "USD": ["Bank Transfer", "Wise", "Revolut"]
-  },
   "DEFAULTS": {
     "BINANCE_P2P_TRADE_METHOD": "sell",
     "BINANCE_P2P_MIN_OPERATION_LIMIT": 5000,
