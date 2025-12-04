@@ -23,7 +23,7 @@ class WorkerSettings(BaseSettings):
     # Binance API
     binance_base_url: str = "https://p2p.binance.com"
     binance_search_endpoint: str = "/bapi/c2c/v2/friendly/c2c/adv/search"
-    binance_p2p_rows_per_page: int = 100
+    binance_p2p_rows_per_page: int = 20
 
     # P2P Configuration from JSON
     _p2p_config: Optional[dict] = None
