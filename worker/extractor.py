@@ -132,7 +132,7 @@ class BinanceP2PExtractor:
 
             payload = {
                 "page": page,
-                "rows": settings.binance_p2p_until_page,
+                "rows": settings.binance_p2p_rows_per_page,
                 "tradeType": trade_type,
                 "asset": asset,
                 "fiat": fiat,
@@ -175,6 +175,13 @@ class BinanceP2PExtractor:
                     logger.info(f"No offers found for {fiat}/{asset}/{trade_type}")
                     break
 
+                if len(offers) < settings.binance_p2p_rows_per_page:
+                    logger.info(
+                        f"Fewer offers ({len(offers)}) than rows_per_page "
+                        f"({settings.binance_p2p_rows_per_page}) found for "
+                        f"{fiat}/{asset}/{trade_type}. Assuming last page."
+                    )
+
                 # Parse offers
                 for ad in offers:
                     parsed_offer = self._parse_offer(ad)
@@ -183,13 +190,7 @@ class BinanceP2PExtractor:
 
                 page += 1
 
-                if page > settings.binance_p2p_until_page:
-                    logger.warning(
-                        f"Reached max pages per pair "
-                        f"({settings.binance_p2p_until_page}) for "
-                        f"{fiat}/{asset}/{trade_type}"
-                    )
-                    break
+
 
             except Exception as e:
                 logger.error(

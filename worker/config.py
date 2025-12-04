@@ -23,6 +23,7 @@ class WorkerSettings(BaseSettings):
     # Binance API
     binance_base_url: str = "https://p2p.binance.com"
     binance_search_endpoint: str = "/bapi/c2c/v2/friendly/c2c/adv/search"
+    binance_p2p_rows_per_page: int = 100
 
     # P2P Configuration from JSON
     _p2p_config: Optional[dict] = None
@@ -36,9 +37,7 @@ class WorkerSettings(BaseSettings):
                 self._p2p_config = json.load(f)
         return self._p2p_config
 
-    @property
-    def binance_p2p_until_page(self) -> int:
-        return self.p2p_config["DEFAULTS"]["BINANCE_P2P_UNTIL_PAGE"]
+
 
     # Extraction
     extraction_interval_minutes: int = 10
