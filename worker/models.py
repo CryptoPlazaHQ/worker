@@ -123,3 +123,36 @@ class FactOfferPaymentMethods(Base):
         Index('idx_offer_payments', 'offer_id', 'extraction_timestamp'),
         Index('idx_payment_offers', 'payment_method_id'),
     )
+
+
+# User model for API key management
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+    api_keys = relationship("APIKey", back_populates="user", cascade="all, delete-orphan")
+
+
+# APIKey model for API key management
+class APIKey(Base):
+    __tablename__ = "api_keys"
+    id = Column(Integer, primary_key=True, index=True)
+    prefix = Column(String, unique=True, index=True, nullable=False)
+    hashed_key = Column(String, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=func.now())
+    is_active = Column(Boolean, default=True)
+    name = Column(String)
+    user = relationship("User", back_populates="api_keys")
+
+
+# Run model for tracking API operations/scrapes (if API itself still tracks runs)
+class Run(Base):
+    __tablename__ = "runs"
+    id = Column(Integer, primary_key=True, index=True)
+    exchange = Column(String, nullable=False)
+    fetched_at = Column(DateTime, default=func.now(), index=True)
+    total_offers = Column(Integer)
+    error_message = Column(String, nullable=True)
