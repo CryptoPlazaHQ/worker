@@ -1,1 +1,19 @@
-fixes.md
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Virtual environment
+.venv/
+env/
+
+# IDE files
+.idea/
+.vscode/
+
+# Database files
+*.db
+test.db
+
+# Log files
+*.log
+fix.md
