@@ -48,7 +48,7 @@ Make sure you have these tools and resources ready:
 The API needs two crucial pieces of information from you: where to find the database, and a special **Internal API Admin Key** for its own admin tasks. We provide these via an `.env` file.
 
 1.  **Locate/Create the `.env` File:**
-    *   This `.env` file **must** be in the **root directory of your entire project** (e.g., `C:\Users\DELL\Desktop\dashboards\.env`), *not* inside the `Api` folder.
+    *   This `.env` file **must** be the **same `.env` file** that your `worker/` application is using. It is located in the **root directory of your entire project** (e.g., `C:\Users\DELL\Desktop\dashboards\.env`), *not* inside the `Api` folder.
     *   If you already have a `.env` file for your worker, you will *edit that same file*. If not, create a new one.
 
 2.  **Add Configuration Variables to `.env`:**

@@ -2,11 +2,15 @@ from logging.config import fileConfig
 import os
 import sys
 from pathlib import Path
+from dotenv import load_dotenv # Import load_dotenv
 
 # Add the project root to sys.path to allow absolute imports like 'worker.models'
 # Assuming 'Api' directory is directly under the project root
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
+
+# Explicitly load .env file from the project root
+load_dotenv(project_root / ".env")
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -35,7 +39,7 @@ target_metadata = Base.metadata
 # ... etc.
 
 # Get the database URL from environment variable
-database_url = os.environ.get("DATABASE_URL")
+database_url = os.environ.get("API_DATABASE_URL")
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
