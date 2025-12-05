@@ -1,31 +1,34 @@
-# How to Run the P2P Dashboard Data API Locally
+# How to Run the P2P Dashboard Data API Locally (Beginner's Guide)
 
-This guide provides a step-by-step walkthrough for setting up and running the P2P Dashboard Data API on your local machine. This API acts as the Phase II data access layer, connecting to the PostgreSQL database populated by the independent data ingestion `worker/` application.
+This guide provides a clear, step-by-step walkthrough for setting up and running the P2P Dashboard Data API on your local machine.
 
-## 1. Prerequisites
+**IMPORTANT CONTEXT:**
 
-Before you begin, ensure you have the following:
+*   **Phase I (Data Worker):** We assume the independent `worker/` application (from the main project) is ALREADY running and successfully populating your PostgreSQL database with P2P trading data. This API will connect to *that very same database* to read the data the worker has collected.
+*   **API's Role (Phase II):** This API is purely a **read-only interface** to the data in your PostgreSQL database. It does not perform new data scraping or modify the core dimensional data.
+*   **API Key Management:** This API itself has features to manage users and issue API keys for secure access to its data endpoints.
 
-*   **Python 3.10+** installed.
+## 1. Prerequisites: What You Need Before You Start
+
+Make sure you have these tools and resources ready:
+
+*   **Python 3.10+** installed on your system.
 *   **Git** installed.
 *   **Docker** (optional, for containerized deployment).
-*   **PostgreSQL Database:** A running PostgreSQL instance that is actively being populated by the `worker/` application. This API will connect to this same database.
-*   **API Key:** A valid API key for authentication. This key needs to be stored in the database's `api_keys` table (managed via the API's admin endpoints once it's running).
+*   **PostgreSQL Database Connection String:** This is the `API_DATABASE_URL` for the database that your `worker/` application is already feeding. You'll need it.
+*   **A strong random string** to use as your **Internal API Admin Key**. You can generate one with `python -c "import secrets; print(secrets.token_hex(32))"`.
 
-## 2. Setting up the Environment
+## 2. Setting up the API's Local Environment
 
-1.  **Clone the Project:** If you haven't already, clone the main project repository.
+1.  **Navigate to the API Folder:**
+    Open your terminal or command prompt and go to the `Api` directory within your main project folder.
     ```bash
-    git clone https://github.com/CryptoPlazaHQ/worker.git # Or your specific repo
-    cd worker # Navigate to the project root
+    cd /path/to/your/main-project/Api 
+    # Example: cd C:\Users\DELL\Desktop\dashboards\Api
     ```
 
-2.  **Navigate to the API Directory:**
-    ```bash
-    cd Api
-    ```
-
-3.  **Create and Activate a Virtual Environment:**
+2.  **Create and Activate a Python Virtual Environment:**
+    This isolates the API's dependencies.
     ```bash
     python -m venv .venv
     # On Windows:
@@ -33,73 +36,115 @@ Before you begin, ensure you have the following:
     # On macOS/Linux:
     source .venv/bin/activate
     ```
-    Your terminal prompt should now start with `(.venv)`.
+    (Your terminal prompt should now show `(.venv)` at the beginning, indicating the environment is active.)
 
-4.  **Install Dependencies:**
+3.  **Install Necessary Python Packages:**
     ```bash
     pip install -r requirements.txt
     ```
 
-## 3. Configuration
+## 3. Configuring the API: The `.env` File (for Internal API Admin Key and DB Connection)
 
-The API requires environment variables for database connection and API key management. These should be placed in an `.env` file located in the **project's root directory** (i.e., `dashboards/.env`, which is one level up from the `Api/` folder).
+The API needs two crucial pieces of information from you: where to find the database, and a special **Internal API Admin Key** for its own admin tasks. We provide these via an `.env` file.
 
-1.  **Create/Edit the `.env` file:** In the root of your main project directory (e.g., `dashboards/`), create a file named `.env` if it doesn't exist.
+1.  **Locate/Create the `.env` File:**
+    *   This `.env` file **must** be in the **root directory of your entire project** (e.g., `C:\Users\DELL\Desktop\dashboards\.env`), *not* inside the `Api` folder.
+    *   If you already have a `.env` file for your worker, you will *edit that same file*. If not, create a new one.
 
-2.  **Add Configuration Variables:**
-    *   `API_DATABASE_URL`: The connection string for your PostgreSQL database. This *must* be the same database that your `worker/` application is feeding.
-    *   `API_KEY`: The API key that the API itself will use for its admin operations (e.g., creating users, generating new keys). **This is NOT the key used by clients to access data endpoints.**
+2.  **Add Configuration Variables to `.env`:**
+    Open the `.env` file and add these two lines, replacing the placeholder values with your actual information:
 
-    Your `.env` file should look something like this:
     ```dotenv
-    # Located at dashboards/.env
+    # Located at C:\Users\DELL\Desktop\dashboards\.env (or your project root)
     API_DATABASE_URL="postgresql://user:password@host:port/your_database_name"
-    API_KEY="a_strong_random_key_for_internal_api_admin_ops"
+    API_KEY="your_internal_api_admin_key_generated_in_prerequisites"
     ```
-    > **Note:** Replace `user`, `password`, `host`, `port`, `your_database_name` with your actual PostgreSQL credentials. The `API_KEY` can be any strong random string.
+    *   **`API_DATABASE_URL`**: This is the connection string to the *same PostgreSQL database* where your data `worker/` is storing its data. Example: `postgresql://p2p_user:strongpassword@localhost:5432/p2p_dashboard`.
+    *   **`API_KEY`**: This is your **Internal API Admin Key**. It's a **private key** used by the API itself to secure its own administrative endpoints (like creating new users or issuing client-facing API keys). You should set this to a strong, randomly generated string (e.g., from `python -c "import secrets; print(secrets.token_hex(32))"`). **Keep this key secure and secret!**
 
-## 4. Database Initialization (Admin Setup)
+## 4. Database Initialization: Setting up API Users & Keys Tables
 
-The API needs to manage users and API keys within its connected database. This typically requires running migrations or ensuring the `users` and `api_keys` tables exist.
+Even though your worker has created the main data tables (`dim_` and `fact_`), this API needs its *own* tables for managing users and their API keys (`users` and `api_keys` tables).
 
-1.  **Ensure Database Schema is Up-to-Date:** This API now connects to the worker's database. The worker should have initialized the base schema (`dim_` and `fact_` tables). However, the `users` and `api_keys` tables (and `runs` table) are now part of the shared schema (from `worker/models.py`). You might need to run Alembic migrations *from this API project* if these specific tables are not yet present in your worker's database.
-
-    *   **Initial Setup (if `users`, `api_keys`, `runs` tables are missing):**
-        ```bash
-        # Ensure you are in the Api/ directory and virtual environment is active
-        alembic upgrade head
-        ```
-        > **Warning:** Be cautious when running migrations. Ensure your database is backed up if you are unsure. If the worker's database already has these tables from a previous API setup or manual creation, `alembic upgrade head` might not be necessary or could error if tables exist.
-
-2.  **Generate an initial API Admin Key:** For clients to access the API's data endpoints, you need to create a user and generate an API key. This is done via the API's own `/admin` endpoints.
-    *   First, start the API (see Section 5).
-    *   Access the Swagger UI at `http://127.0.0.1:8000/docs`.
-    *   **Use the `API_KEY` from your `.env` as the `X-API-Key` to authorize yourself for admin operations.** This `API_KEY` allows you to create users and generate client-facing API keys.
-    *   Find the "Admin" section and expand `POST /admin/users/`. Create an admin user.
-    *   Log in via `POST /admin/token` with the admin user credentials to get a JWT `access_token`.
-    *   Use this `access_token` (as a `Bearer` token) to authorize your session in Swagger UI.
-    *   Then, use `POST /admin/keys/` to generate client-facing API keys. **This is the key you will provide to your frontend or other data consumers.**
+1.  **Run Database Migrations (if needed):**
+    The API uses Alembic for database migrations. If the `users`, `api_keys`, or `runs` tables (which are defined in the shared `worker/models.py`) are not yet in your database, you need to run the migrations for this API project.
+    *   **Ensure your virtual environment is active** (`(.venv)` in your terminal prompt) and you are in the `Api/` directory.
+    ```bash
+    alembic upgrade head
+    ```
+    > **Note:** If these tables already exist (e.g., from a previous setup or manual creation), this command might indicate "No migrations found" or similar. This is fine. If you encounter errors, ensure your `API_DATABASE_URL` is correct.
 
 ## 5. Running the API Server
 
-1.  **Ensure your virtual environment is active** and you are in the `Api/` directory.
-2.  **Run the API:**
+Now you can start the API!
+
+1.  **Ensure your virtual environment is active** (`(.venv)` in your terminal prompt) and you are in the `Api/` directory.
+2.  **Start the API Server:**
     ```bash
     uvicorn p2p_api.main:app --reload
     ```
-3.  You should see output indicating the server is running on `http://127.0.0.1:8000`.
+3.  You should see output indicating the server is running, typically on `http://127.0.0.1:8000`.
 
-The API will now be live and serving data from your worker-populated PostgreSQL database.
+The P2P Dashboard Data API is now live and serving data from your worker-populated PostgreSQL database!
 
-## 6. Accessing API Documentation
+## 6. Accessing API Documentation & Generating Client-Facing API Keys
 
-You can view the auto-generated interactive API documentation (Swagger UI) at `http://127.0.0.1:8000/docs`. This is where you can explore the available endpoints and test them.
+The API automatically generates interactive documentation (Swagger UI) where you can test endpoints and manage user access. This is also where you will **generate the API Keys that your frontend applications will use.**
 
-## 7. Next Steps (Connecting a Frontend)
+1.  **Open API Documentation (Swagger UI):**
+    Go to `http://127.0.0.1:8000/docs` in your web browser.
 
-If you are running a frontend application (e.g., Streamlit), ensure it's configured to:
-*   Point to this API's URL (`http://127.0.0.1:8000`).
-*   Use one of the client-facing API keys generated in Section 4.
+2.  **Step 1: Authorize for API Admin Operations (using your Internal API Admin Key)**
+    To use the administrative endpoints (like creating users or generating new client-facing API keys), you need to authorize with the **Internal API Admin Key** you set in your `.env` file.
+    *   Click the green **"Authorize"** button (usually at the top right).
+    *   In the dialog, find the `X-API-Key (apiKey)` section.
+    *   Enter the exact value of your `API_KEY` from your project's root `.env` file into the "Value" field.
+    *   Click "Authorize" and then "Close".
+
+3.  **Step 2: Create an Admin User (First Time Only):**
+    This user will be able to log in and generate client-facing API keys.
+    *   Expand the **"Admin"** section in the Swagger UI.
+    *   Find the `POST /admin/users/` endpoint.
+    *   Click "Try it out".
+    *   In the "Request body" (JSON format), enter a username and a strong password for your admin user.
+        ```json
+        {
+          "username": "admin",
+          "password": "your_strong_admin_password"
+        }
+        ```
+    *   Click "Execute". A `200` response means the user was created.
+
+4.  **Step 3: Log In as Admin User & Get an Access Token:**
+    You'll use this token to authorize yourself for the next step (generating client-facing API keys).
+    *   Expand the **"Admin"** section again.
+    *   Find the `POST /admin/token` endpoint.
+    *   Click "Try it out".
+    *   Enter the username and password of the admin user you just created.
+    *   Click "Execute".
+    *   The response will contain an `access_token` (a long string starting with `eyJ...`). **Copy this entire token string.**
+
+5.  **Step 4: Authorize with the Access Token (for generating client keys):**
+    This authorizes your Swagger UI session to generate client-facing API keys on behalf of the admin user.
+    *   Click the green **"Authorize"** button again.
+    *   In the dialog, in the `Bearer (apiKey)` section, type `Bearer ` (with a space after "Bearer") and then paste the `access_token` you copied.
+    *   Click "Authorize" and then "Close".
+
+6.  **Step 5: Generate a Client-Facing API Key (for your Frontend/Clients):**
+    This key is what your frontend or other applications will use to access the data endpoints.
+    *   Expand the **"Admin"** section.
+    *   Find the `POST /admin/keys/` endpoint.
+    *   Click "Try it out".
+    *   In the "Request body", provide a name for this new API key (e.g., `{"name": "my-frontend-app-key"}`).
+    *   Click "Execute".
+    *   The response will show your new **Client-Facing API Key** (e.g., `prefix_secret_string`). **Copy this entire key! This is the key you will provide to your frontend or other data consumers.** It will not be shown again!
+
+## 7. Next Steps: Connecting a Frontend (Optional)
+
+If you are running a frontend application (e.g., Streamlit, React, etc.), configure it to:
+
+*   Point to this API's base URL (`http://127.0.0.1:8000`).
+*   Include the **Client-Facing API Key** (generated in Section 6, Step 5) in the `X-API-Key` header for all requests to data endpoints.
 
 ## 8. Testing
 
@@ -112,8 +157,12 @@ python -m pytest
 
 ## 9. Troubleshooting
 
-*   **`DATABASE_URL` Error:** Double-check your `.env` file for `API_DATABASE_URL` spelling and connection string format. Ensure your PostgreSQL server is running and accessible.
-*   **API Key Authorization Issues:** Verify you are using the correct API key. Remember the `API_KEY` in `.env` is for *admin operations* only; client applications need API keys generated via `/admin/keys`. Ensure the generated client keys are active in the database.
-*   **Database Tables Missing:** If `users`, `api_keys`, or `runs` tables are missing, ensure `alembic upgrade head` was run successfully. If dimensional tables are missing, ensure your `worker/` application has run and populated the database.
+*   **`DATABASE_URL` / `API_DATABASE_URL` Error:** Double-check your `.env` file for correct spelling and connection string format. Ensure your PostgreSQL server is running and accessible from where you're running the API.
+*   **Internal API Admin Key Authorization Issues:** Verify you are using the correct `API_KEY` from your `.env` file when authorizing for admin operations (Section 6, Step 1).
+*   **Client-Facing API Key Authorization Issues:**
+    *   Ensure the client-facing API key you're using was generated in Section 6, Step 5.
+    *   Remember the format for clients: `X-API-Key: your_generated_client_key`.
+    *   Ensure the generated client keys are active in the database.
+*   **Database Tables Missing:** If `users`, `api_keys`, or `runs` tables are missing, ensure `alembic upgrade head` was run successfully (Section 4.1). If dimensional tables (`dim_`, `fact_`) are missing, ensure your `worker/` application has run and populated the database.
 
 ---
