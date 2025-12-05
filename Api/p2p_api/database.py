@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 
 # --- IMPORTANT: Import Base and ALL Models from worker/models.py ---
 # This makes worker/models.py the single source of truth for ORM models
-from ...worker.models import (
+from worker.models import (
     Base,
     DimCryptocurrencies,
     DimFiatCurrencies,
