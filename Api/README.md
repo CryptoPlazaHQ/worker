@@ -1,8 +1,8 @@
-# P2P Dashboard API
+# P2P Dashboard Data API
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A powerful and flexible API for scraping P2P trading data from cryptocurrency exchanges.
+A unified, high-performance FastAPI for querying P2P cryptocurrency trading data from a worker-populated dimensional PostgreSQL database. This API serves as the Phase II data access layer, providing structured and secure access to the wealth of data ingested by the independent data worker.
 
 ## Table of Contents
 
@@ -13,117 +13,91 @@ A powerful and flexible API for scraping P2P trading data from cryptocurrency ex
   - [Docker Usage](#docker-usage)
 - [Usage](#usage)
 - [API Endpoints](#api-endpoints)
-  - [Get Binance Offers](#get-binance-offers)
-  - [Get Binance Pairs](#get-binance-pairs)
-  - [Get Bybit Offers](#get-bybit-offers)
 - [Testing](#testing)
 - [Contributing](#contributing)
 - [License](#license)
 
 ## Features
 
-- **Real-time Data:** Scrape P2P trading data from Binance and other exchanges in real-time.
-- **Flexible Queries:** Filter offers by fiat currency, crypto asset, trade type, and more.
-- **Extensible:** Easily add new exchanges and trading pairs.
-- **Secure:** Protect your API with API key authentication.
-- **Containerized Deployment:** Ready for deployment using Docker for consistent environments.
+-   **Dimensional Data Access:** Query rich, historical P2P trading data organized in a dimensional model (facts and dimensions).
+-   **Comprehensive Filtering & Pagination:** Access offers, advertisers, and core dimensions with advanced filtering, pagination, and sorting capabilities.
+-   **MCP-Aligned Models:** Data exposed via Pydantic models (acting as Model Context Protocol - MCP) for consistent consumption by analytics tools and AI/ML applications.
+-   **Secure Access:** Protect your API with robust API key authentication.
+-   **Containerized Deployment:** Ready for deployment using Docker for consistent environments.
+-   **Scalable Architecture:** Designed for high performance and scalability as a read-only interface.
 
 ## Getting Started
 
-Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
+This API connects to the PostgreSQL database populated by the independent `worker/` application. Ensure your worker is running and populating the database before starting this API.
 
 ### Prerequisites
 
-- Python 3.10+ (for local development)
-- PostgreSQL
-- Docker (for containerized deployment)
+-   Python 3.10+ (for local development)
+-   **PostgreSQL Database:** The same database instance that the `worker/` application is feeding.
+-   Docker (for containerized deployment)
+-   An `.env` file in the project's root directory (`dashboards/`) containing the `API_DATABASE_URL` and `API_KEY`.
 
 ### Local Installation
 
-1. **Clone the repository:**
+1.  **Clone the repository (if you haven't already):**
 
-   ```bash
-   git clone https://github.com/your-username/P2P-Dashboard.git
-   cd P2P-Dashboard
-   ```
+    ```bash
+    git clone https://github.com/CryptoPlazaHQ/worker.git
+    cd worker/Api # Navigate into the API directory
+    ```
 
-2. **Create and activate a virtual environment:**
+2.  **Create and activate a virtual environment:**
 
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate # On Windows, use `.venv\Scripts\activate`
-   ```
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate # On Windows, use `.venv\Scripts\activate`
+    ```
 
-3. **Install Dependencies:**
+3.  **Install Dependencies:**
 
-   - **For Production:**
-     Install only the packages required to run the application:
-     ```bash
-     pip install -r requirements.txt
-     ```
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-   - **For Development & Testing:**
-     This command installs all production packages plus development tools like `pytest`.
-     ```bash
-     pip install -r requirements-dev.txt
-     ```
+4.  **Configure Environment Variables:**
 
-4. **Set up PostgreSQL Database (for production-like setup only):**
-
-   - Ensure you have a running PostgreSQL server and create a database.
-   - Copy the `.env.example` file to `.env` and update the `DATABASE_URL` with your database connection string.
-
-5. **Generate an API key:**
-
-   - Run the following command to generate a secure API key:
-
-     ```bash
-     python -c "import secrets; print(secrets.token_hex(32))"
-     ```
-
-   - Add the generated key to your `.env` file as `API_KEY`.
-
-6. **Troubleshooting Installation (Windows):**
-
-   The `psycopg2-binary` package is required for PostgreSQL support. Sometimes, its installation can fail on Windows if `pip` cannot find a pre-compiled binary for your system. If you see an error related to `Microsoft Visual C++` or `pg_config`, try the following solutions in order:
-
-   - **Solution 1 (Update Pip):** Ensure you have the latest version of pip, which can help it find the correct package version.
-     ```bash
-     python -m pip install --upgrade pip
-     pip install -r requirements.txt
-     ```
-
-   - **Solution 2 (Install Build Tools):** If updating pip doesn't work, you will need to install the necessary build tools.
-     1. Download and install the Visual Studio Build Tools. During installation, select the **"C++ build tools"** workload.
-     2. Download and install PostgreSQL for Windows.
-     3. After installation, try installing the project dependencies again.
+    *   Ensure there's an `.env` file in the **root directory of the entire project** (e.g., `dashboards/.env`).
+    *   This `.env` file *must* contain:
+        *   `API_DATABASE_URL="postgresql://user:password@host:port/database"`: The connection string for the PostgreSQL database (same as the worker's DB).
+        *   `API_KEY="your_api_key_prefix_secret"`: A valid API key for accessing this API. You can generate one using `python -c "import secrets; print(secrets.token_hex(32))"`. **Important: Ensure the database has an active API key stored for testing.**
 
 ### Docker Usage
 
 Alternatively, you can build and run the application using Docker for a containerized environment.
 
-1. **Build the Docker image:**
+1.  **Navigate to the `Api` directory:**
 
-   ```bash
-   docker build -t p2p-dashboard-api .
-   ```
+    ```bash
+    cd Api
+    ```
 
-2. **Run the Docker container:**
+2.  **Build the Docker image:**
 
-   Ensure your `.env` file is correctly configured with your `DATABASE_URL` and `API_KEY`.
+    ```bash
+    docker build -t p2p-dashboard-data-api .
+    ```
 
-   ```bash
-   docker run -d --name p2p-dashboard -p 8000:8000 --env-file ./.env p2p-dashboard-api
-   ```
+3.  **Run the Docker container:**
 
-   - `-d`: Runs the container in detached mode (in the background).
-   - `--name p2p-dashboard`: Assigns a name to your container for easy reference.
-   - `-p 8000:8000`: Maps port 8000 on your host to port 8000 in the container.
-   - `--env-file ./.env`: Mounts your local `.env` file into the container to provide environment variables.
+    Ensure your `.env` file (in the project root) is correctly configured with your `API_DATABASE_URL` and `API_KEY`. You will need to mount this file into the container.
+
+    ```bash
+    docker run -d --name p2p-dashboard-api -p 8000:8000 --env-file ../.env p2p-dashboard-data-api
+    ```
+
+    -   `-d`: Runs the container in detached mode (in the background).
+    -   `--name p2p-dashboard-api`: Assigns a name to your container for easy reference.
+    -   `-p 8000:8000`: Maps port 8000 on your host to port 8000 in the container.
+    -   `--env-file ../.env`: Mounts the `.env` file from the **parent directory** (project root) into the container to provide environment variables.
 
 ## Usage
 
-To run the application locally (after local installation):
+To run the API locally (after local installation and `Api/` directory):
 
 ```bash
 uvicorn p2p_api.main:app --reload
@@ -135,50 +109,76 @@ The API will be available at `http://127.0.0.1:8000`.
 
 You can view the auto-generated interactive API documentation at `http://127.0.0.1:8000/docs`.
 
-## API Endpoints (Manual Examples)
+## API Endpoints
 
-### Get Binance Offers
+All endpoints require API Key authentication via the `X-API-Key` header.
 
-- **Endpoint:** `/api/v1/binance/offers`
-- **Method:** `GET`
-- **Description:** Get a list of P2P offers from Binance.
-- **Query Parameters:**
-  - `fiat` (string, required): Fiat currency (e.g., `VES`, `USD`).
-  - `asset` (string, required): Crypto asset (e.g., `USDT`, `BTC`).
-  - `trade_type` (string, required): Trade type (`BUY` or `SELL`).
-  - `page` (integer, optional): Page number (default: `1`).
-  - `rows` (integer, optional): Number of rows per page (default: `20`).
-- **Headers:**
-  - `X-API-Key` (string, required): Your API key.
-- **Example:**
+### 1. Offers Endpoints
 
-  ```bash
-  curl -X GET "http://127.0.0.1:8000/api/v1/binance/offers?fiat=VES&asset=USDT&trade_type=BUY" -H "X-API-Key: your-api-key"
-  ```
+#### `GET /api/v1/offers`
 
-### Get Binance Pairs
+*   **Description:** Retrieves a paginated and filterable list of P2P offers from the dimensional database.
+*   **Query Parameters:**
+    *   `fiat_code` (string, optional): Filter by fiat currency code (e.g., `ARS`).
+    *   `crypto_symbol` (string, optional): Filter by cryptocurrency symbol (e.g., `USDT`).
+    *   `trade_type` (string, optional): Filter by trade type (`BUY` or `SELL`).
+    *   `min_price` (number, optional): Filter offers with price greater than or equal to this value.
+    *   `max_price` (number, optional): Filter offers with price less than or equal to this value.
+    *   `advertiser_id` (string, optional): Filter by external Binance advertiser ID.
+    *   `payment_method_code` (string, optional): Filter by payment method code (e.g., `Mercadopago`).
+    *   `page` (integer, optional, default: 1): Page number (starting from 1).
+    *   `page_size` (integer, optional, default: 100, max: 1000): Number of items per page.
+    *   `sort_by` (string, optional, default: `extraction_timestamp`): Field to sort by (e.g., `price`, `extraction_timestamp`).
+    *   `sort_order` (string, optional, default: `desc`): Sort order (`asc` or `desc`).
+*   **Headers:** `X-API-Key: your_api_key`
 
-- **Endpoint:** `/api/v1/binance/pairs`
-- **Method:** `GET`
-- **Description:** Get a list of available trading pairs from Binance.
-- **Headers:**
-  - `X-API-Key` (string, required): Your API key.
-- **Example:**
+#### `GET /api/v1/offers/{offer_external_id}`
 
-  ```bash
-  curl -X GET "http://127.0.0.1:8000/api/v1/binance/pairs" -H "X-API-Key: your-api-key"
-  ```
+*   **Description:** Retrieves a single offer by its external Binance ID (`offer_external_id`).
+*   **Path Parameters:** `offer_external_id` (string, required)
+*   **Headers:** `X-API-Key: your_api_key`
 
-### Get Bybit Offers
+### 2. Advertisers Endpoints
 
-- **Endpoint:** `/api/v1/bybit/offers`
-- **Method:** `GET`
-- **Description:** Get a list of P2P offers from Bybit.
-- **Note:** This endpoint is not yet implemented.
+#### `GET /api/v1/advertisers`
+
+*   **Description:** Retrieves a paginated and filterable list of current P2P advertisers.
+*   **Query Parameters:**
+    *   `nickname` (string, optional): Filter by advertiser nickname (partial match).
+    *   `is_merchant` (boolean, optional): Filter by merchant status.
+    *   `page` (integer, optional, default: 1)
+    *   `page_size` (integer, optional, default: 100, max: 1000)
+*   **Headers:** `X-API-Key: your_api_key`
+
+#### `GET /api/v1/advertisers/{advertiser_id}`
+
+*   **Description:** Retrieves a specific current advertiser by their external Binance ID.
+*   **Path Parameters:** `advertiser_id` (string, required)
+*   **Headers:** `X-API-Key: your_api_key`
+
+### 3. Dimensional Data Endpoints
+
+#### `GET /api/v1/cryptocurrencies`
+
+*   **Description:** Retrieves a paginated list of supported cryptocurrencies.
+*   **Query Parameters:** `page`, `page_size`
+*   **Headers:** `X-API-Key: your_api_key`
+
+#### `GET /api/v1/fiat_currencies`
+
+*   **Description:** Retrieves a paginated list of supported fiat currencies.
+*   **Query Parameters:** `page`, `page_size`
+*   **Headers:** `X-API-Key: your_api_key`
+
+#### `GET /api/v1/payment_methods`
+
+*   **Description:** Retrieves a paginated list of supported payment methods.
+*   **Query Parameters:** `page`, `page_size`
+*   **Headers:** `X-API-Key: your_api_key`
 
 ## Testing
 
-To run the tests, use the following command:
+To run the tests for this API application (assuming the test suite has been updated to reflect the new functionality):
 
 ```bash
 python -m pytest
@@ -188,12 +188,12 @@ python -m pytest
 
 Contributions are welcome! Please follow these steps to contribute:
 
-1. Fork the repository.
-2. Create a new branch (`git checkout -b feature/your-feature`).
-3. Make your changes.
-4. Commit your changes (`git commit -m 'Add some feature'`).
-5. Push to the branch (`git push origin feature/your-feature`).
-6. Open a pull request.
+1.  Fork the repository.
+2.  Create a new branch (`git checkout -b feature/your-feature`).
+3.  Make your changes.
+4.  Commit your changes (`git commit -m 'Add some feature'`).
+5.  Push to the branch (`git push origin feature/your-feature`).
+6.  Open a pull request.
 
 ## License
 
