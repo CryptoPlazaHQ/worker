@@ -56,6 +56,7 @@ class WorkerSettings(BaseSettings):
     class Config:
         env_file = ".env"
         env_prefix = "WORKER_" # All env vars start with WORKER_
+        extra = 'ignore'
 
 # Global settings instance
 settings = WorkerSettings()

@@ -107,16 +107,7 @@ app = FastAPI(
     license_info={"name": "Usage License"},
 )
 
-# --- REMOVE SCRAPER ERROR HANDLER ---
-# @app.exception_handler(ScraperError)
-# async def scraper_exception_handler(request: Request, exc: ScraperError):
-#     logger.error(f"Scraper error for request {request.url}: {exc.message}")
-#     return JSONResponse(
-#         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-#         content={
-#             "detail": "Could not fetch data from the external source. Please try again later."
-        },
-    )
+
 
 
 async def get_api_key(
