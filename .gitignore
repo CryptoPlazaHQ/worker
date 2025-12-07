@@ -83,3 +83,5 @@ logs/
 *.log
 log.txt
 log1.md
+handover.md
+test_db_connection.py

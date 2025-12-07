@@ -12,6 +12,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import QueuePool
 
 from .config import settings
+from .models import Base
 
 logger = logging.getLogger(__name__)
 
