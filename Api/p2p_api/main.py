@@ -6,7 +6,7 @@ from decimal import Decimal # Import Decimal for price filters
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse
-from fastapi.security import APIKeyHeader
+from fastapi.security import APIKeyHeader, HTTPBearer # Import HTTPBearer
 from sqlalchemy.orm import Session
 
 from . import (
@@ -27,6 +27,7 @@ from .auth import pwd_context
 logger = logging.getLogger(__name__)
 
 api_key_header = APIKeyHeader(name="X-API-Key")
+bearer_scheme = HTTPBearer() # Define the HTTPBearer scheme
 
 _engine = None
 _SessionLocal = None
@@ -105,6 +106,26 @@ app = FastAPI(
         "email": "info@api.bolivarparalelo.org",
     },
     license_info={"name": "Usage License"},
+    openapi_extra={
+        "components": {
+            "securitySchemes": {
+                "Bearer Auth": {
+                    "type": "http",
+                    "scheme": "bearer",
+                    "bearerFormat": "JWT"
+                },
+                "X-API-Key": {
+                    "type": "apiKey",
+                    "in": "header",
+                    "name": "X-API-Key"
+                }
+            }
+        },
+        "security": [
+            {"Bearer Auth": []},
+            {"X-API-Key": []}
+        ]
+    }
 )
 
 
