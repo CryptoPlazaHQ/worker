@@ -12,7 +12,7 @@ This guide provides a clear, step-by-step walkthrough for setting up and running
 
 Make sure you have these tools and resources ready:
 
-*   **Python 3.10+** installed on your system.
+*   **Python 3.12** installed on your system.
 *   **Git** installed.
 *   **Docker** (optional, for containerized deployment).
 *   **PostgreSQL Database Connection String:** This is the `API_DATABASE_URL` for the database that your `worker/` application is already feeding. You'll need it.
@@ -20,28 +20,17 @@ Make sure you have these tools and resources ready:
 
 ## 2. Setting up the API's Local Environment
 
-1.  **Navigate to the API Folder:**
-    Open your terminal or command prompt and go to the `Api` directory within your main project folder.
-    ```bash
-    cd /path/to/your/main-project/Api 
-    # Example: cd C:\Users\DELL\Desktop\dashboards\Api
-    ```
+This API operates within the same Python virtual environment established at the **project root**. Ensure you have completed the following steps outlined in the main `README.md` first:
 
-2.  **Create and Activate a Python Virtual Environment:**
-    This isolates the API's dependencies.
-    ```bash
-    python -m venv .venv
-    # On Windows:
-    .\.venv\Scripts\activate
-    # On macOS/Linux:
-    source .venv/bin/activate
-    ```
-    (Your terminal prompt should now show `(.venv)` at the beginning, indicating the environment is active.)
+*   **Created and activated a Python 3.12 virtual environment** at the project root.
+*   **Installed all core project dependencies** from both `requirements.txt` (root) and `Api/requirements.txt` from the project root.
 
-3.  **Install Necessary Python Packages:**
-    ```bash
-    pip install -r requirements.txt
-    ```
+Once the main project environment is set up and active, navigate into the API directory:
+
+```bash
+cd Api
+```
+(Your terminal prompt should show `(.venv)` and you should be in the `Api/` directory.)
 
 ## 3. Configuring the API: The `.env` File (for Internal API Admin Key and DB Connection)
 
@@ -62,26 +51,29 @@ The API needs two crucial pieces of information from you: where to find the data
     *   **`API_DATABASE_URL`**: This is the connection string to the *same PostgreSQL database* where your data `worker/` is storing its data. Example: `postgresql://p2p_user:strongpassword@localhost:5432/p2p_dashboard`.
     *   **`API_KEY`**: This is your **Internal API Admin Key**. It's a **private key** used by the API itself to secure its own administrative endpoints (like creating new users or issuing client-facing API keys). You should set this to a strong, randomly generated string (e.g., from `python -c "import secrets; print(secrets.token_hex(32))"`). **Keep this key secure and secret!**
 
-## 4. Database Initialization: Setting up API Users & Keys Tables
+## 4. Database Initialization: Creating API Users & Keys Tables
 
-Even though your worker has created the main data tables (`dim_` and `fact_`), this API needs its *own* tables for managing users and their API keys (`users` and `api_keys` tables).
+The API needs its own tables for managing users and their API keys (`users`, `api_keys`, and `runs` tables). These tables are defined in `worker/models.py`.
 
-1.  **Run Database Migrations (if needed):**
-    The API uses Alembic for database migrations. If the `users`, `api_keys`, or `runs` tables (which are defined in the shared `worker/models.py`) are not yet in your database, you need to run the migrations for this API project.
-    *   **Ensure your virtual environment is active** (`(.venv)` in your terminal prompt) and you are in the `Api/` directory.
-    ```bash
-    alembic upgrade head
-    ```
-    > **Note:** If these tables already exist (e.g., from a previous setup or manual creation), this command might indicate "No migrations found" or similar. This is fine. If you encounter errors, ensure your `API_DATABASE_URL` is correct.
+**Important:** The initial creation of these tables, along with all other project tables, is handled automatically when `run_api.py` is executed for the first time. You do **not** need to run `alembic upgrade head` for initial table creation.
+
+Simply running the API server (as described in the next section) will ensure these tables are created if they don't already exist in your database.
+
+*   **Alembic Migrations (for Schema Evolution):** If you are developing and need to apply schema changes (migrations) after the initial setup, you would use Alembic. Ensure your `alembic.ini` is correctly configured to connect to your database. For initial setup, this step is not required.
 
 ## 5. Running the API Server
 
-Now you can start the API!
+Now you can start the API! The `run_api.py` script (located in the project root) is the single entry point for starting the FastAPI application and will also handle initial database schema creation.
 
-1.  **Ensure your virtual environment is active** (`(.venv)` in your terminal prompt) and you are in the `Api/` directory.
+1.  **Navigate to the project root:**
+    If you are currently in the `Api/` directory, navigate back to the project root:
+    ```bash
+    cd ..
+    ```
 2.  **Start the API Server:**
     ```bash
-    uvicorn p2p_api.main:app --reload
+    # Ensure your virtual environment is active and you are in the project root
+    python run_api.py
     ```
 3.  You should see output indicating the server is running, typically on `http://127.0.0.1:8000`.
 

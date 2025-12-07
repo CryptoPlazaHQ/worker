@@ -6,7 +6,7 @@ This document provides instructions on how to deploy and run the P2P data ingest
 
 ## Prerequisites
 
-- Python 3.7+
+- Python 3.12
 - PostgreSQL database
 - `.venv` virtual environment
 - Required Python packages (see `requirements.txt`)
@@ -20,26 +20,30 @@ git clone <repository_url>
 cd <repository_directory>
 ```
 
-### 2. Create a virtual environment
+### 2. Setup and Activate Python Virtual Environment
+
+Create and activate a Python 3.12 virtual environment from the **project root directory**:
 
 ```bash
-python -m venv .venv
-```
+# Ensure you are in the project root: C:\Users\DELL\Desktop\dashboards
+py -3.12 -m venv .venv
 
-### 3. Activate the virtual environment
+# On Windows:
+.\\.venv\Scripts\activate
 
-```bash
-# Windows
-.venv\Scripts\activate
-
-# Linux/macOS
+# On macOS/Linux:
 source .venv/bin/activate
 ```
+(Your terminal prompt should now show `(.venv)` at the beginning, indicating the environment is active.)
 
-### 4. Install dependencies
+## 3. Install Dependencies
+
+With the virtual environment active, install all required Python packages for both the worker and API:
 
 ```bash
+# Ensure you are in the project root: C:\Users\DELL\Desktop\dashboards
 pip install -r requirements.txt
+pip install -r Api/requirements.txt
 ```
 
 ### 5. Configure the worker
@@ -63,30 +67,38 @@ WORKER_LOG_LEVEL=INFO
 
 Replace the placeholders with your actual values.
 
-### 6. Create database schema
 
-Run the SQL script in `schema.sql` to create the database schema. You can use a tool like `psql` to run the script:
+
+## 6. Run the Worker (and Initial Database Setup)
+
+The worker needs the database schema to be created before it can operate. The `run_api.py` script (located in the project root) is responsible for this initial database schema creation for all models.
+
+First, ensure the database schema is initialized by running the API startup script *once*:
 
 ```bash
-psql -U <user> -h <host> -d <database> -f schema.sql
+# Ensure you are in the project root: C:\Users\DELL\Desktop\dashboards
+python run_api.py
+# You can stop this process after it logs "Checking and creating tables if they don't exist..." and no errors occur.
+# Or, keep it running in a separate terminal if you intend to use the API.
 ```
 
-### 7. Run the worker
+Once the database schema is created (or if the API is already running), you can start the worker:
 
 ```bash
-python worker/main.py
+# Ensure your virtual environment is active and you are in the project root
+python -m worker.main
 ```
 
 The worker will start extracting data from Binance P2P and loading it into the PostgreSQL database.
 
-## Monitoring
+## 7. Monitoring
 
 The worker exposes Prometheus metrics on port 9090. You can use Prometheus to monitor the worker's performance.
 
-## Logging
+## 8. Logging
 
 The worker uses the logging module to log events. The log level can be configured using the `WORKER_LOG_LEVEL` environment variable.
 
-## Contributing
+## 9. Contributing
 
 Contributions are welcome! Please submit a pull request with your changes.
