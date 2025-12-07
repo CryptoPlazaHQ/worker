@@ -30,41 +30,19 @@ A unified, high-performance FastAPI for querying P2P cryptocurrency trading data
 
 This API connects to the PostgreSQL database populated by the independent `worker/` application. Ensure your worker is running and populating the database before starting this API.
 
-### Prerequisites
+For detailed instructions on local installation, environment setup, configuration, running the API server, and generating API keys, please refer to the comprehensive guide: [**`Api/howto_run.md`**](./howto_run.md)
 
--   Python 3.10+ (for local development)
--   **PostgreSQL Database:** The same database instance that the `worker/` application is feeding.
--   Docker (for containerized deployment)
--   An `.env` file in the project's root directory (`dashboards/`) containing the `API_DATABASE_URL` and `API_KEY`.
+### Key Prerequisites (Summary)
 
-### Local Installation
+*   **Python 3.12** installed on your system.
+*   **Git** installed.
+*   **Docker** (optional, for containerized deployment).
+*   **PostgreSQL Database:** The same database instance that the `worker/` application is feeding.
+*   **`.env` file:** Located in the **project root directory** (`dashboards/`). This file must contain `API_DATABASE_URL` (for the database connection) and `API_KEY` (your Internal API Admin Key).
 
-1.  **Clone the repository (if you haven't already):**
+### Local Installation & Running the API
 
-    ```bash
-    git clone https://github.com/CryptoPlazaHQ/worker.git
-    cd worker/Api # Navigate into the API directory
-    ```
-
-2.  **Create and activate a virtual environment:**
-
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate # On Windows, use `.venv\Scripts\activate`
-    ```
-
-3.  **Install Dependencies:**
-
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-4.  **Configure Environment Variables:**
-
-    *   Ensure there's an `.env` file in the **root directory of the entire project** (e.g., `dashboards/.env`).
-    *   This `.env` file *must* contain:
-        *   `API_DATABASE_URL="postgresql://user:password@host:port/database"`: The connection string for the PostgreSQL database (same as the worker's DB).
-        *   `API_KEY="your_api_key_prefix_secret"`: A valid API key for accessing this API. You can generate one using `python -c "import secrets; print(secrets.token_hex(32))"`. **Important: Ensure the database has an active API key stored for testing.**
+Please follow the detailed steps in [**`Api/howto_run.md`**](./howto_run.md).
 
 ### Docker Usage
 
@@ -97,21 +75,15 @@ Alternatively, you can build and run the application using Docker for a containe
 
 ## Usage
 
-To run the API locally (after local installation and `Api/` directory):
+For comprehensive instructions on how to run the API locally or via Docker, please refer to the detailed guide: [**`Api/howto_run.md`**](./howto_run.md)
 
-```bash
-uvicorn p2p_api.main:app --reload
-```
+Once running, the API will be available at `http://127.0.0.1:8000`.
 
-If running via Docker, the application will start automatically when the container runs.
-
-The API will be available at `http://127.0.0.1:8000`.
-
-You can view the auto-generated interactive API documentation at `http://127.0.0.1:8000/docs`.
+You can view the auto-generated interactive API documentation (Swagger UI) at `http://127.0.0.1:8000/docs`.
 
 ## API Endpoints
 
-All endpoints require API Key authentication via the `X-API-Key` header.
+All data endpoints require a **Client-Facing API Key** for authentication, sent via the `X-API-Key` header. For instructions on how to generate these client keys, please refer to Section 6 of [**`Api/howto_run.md`**](./howto_run.md).
 
 ### 1. Offers Endpoints
 

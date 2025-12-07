@@ -1,34 +1,23 @@
-from typing import Generator, Optional
+from typing import Generator
 from functools import lru_cache
-
-from sqlalchemy.orm import Session, sessionmaker
+from fastapi import Request # Import Request
+from sqlalchemy.orm import Session
 
 from .config import Settings
-
-_SessionLocal: Optional[sessionmaker] = None
 
 @lru_cache()
 def get_settings():
     return Settings()
 
-
-def set_session_local(session_local: sessionmaker):
+def get_db(request: Request) -> Generator[Session, None, None]: # Add request: Request
     """
-    Sets the session factory for the dependency.
-    This should be called once at application startup.
+    FastAPI dependency to get a database session from the application state.
     """
-    global _SessionLocal
-    _SessionLocal = session_local
+    # Retrieve SessionLocal from app.state
+    if not hasattr(request.app.state, 'SessionLocal') or request.app.state.SessionLocal is None:
+        raise RuntimeError("Database session factory has not been initialized on app.state.")
 
-
-def get_db() -> Generator[Session, None, None]:
-    """
-    FastAPI dependency to get a database session.
-    """
-    if _SessionLocal is None:
-        raise RuntimeError("Database session factory has not been initialized.")
-
-    db = _SessionLocal()
+    db = request.app.state.SessionLocal()
     try:
         yield db
     finally:

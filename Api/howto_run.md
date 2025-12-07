@@ -61,6 +61,19 @@ Simply running the API server (as described in the next section) will ensure the
 
 *   **Alembic Migrations (for Schema Evolution):** If you are developing and need to apply schema changes (migrations) after the initial setup, you would use Alembic. Ensure your `alembic.ini` is correctly configured to connect to your database. For initial setup, this step is not required.
 
+## 4.1. Creating the Initial Admin User (CLI)
+
+Before you can use the API's administrative features (like generating client API keys), you need to create your first admin user. This is done via a command-line script for security and ease of setup.
+
+1.  **Navigate to the project root:**
+    Ensure you are in the project root directory (`C:\Users\DELL\Desktop\dashboards`).
+2.  **Run the admin user creation script:**
+    ```bash
+    # Ensure your virtual environment is active and you are in the project root
+    python create_admin_user.py
+    ```
+    Follow the prompts to enter your desired admin username and a strong password. This script will create the first administrator user in your database.
+
 ## 5. Running the API Server
 
 Now you can start the API! The `run_api.py` script (located in the project root) is the single entry point for starting the FastAPI application and will also handle initial database schema creation.
@@ -86,50 +99,23 @@ The API automatically generates interactive documentation (Swagger UI) where you
 1.  **Open API Documentation (Swagger UI):**
     Go to `http://127.0.0.1:8000/docs` in your web browser.
 
-2.  **Step 1: Authorize for API Admin Operations (using your Internal API Admin Key)**
-    To use the administrative endpoints (like creating users or generating new client-facing API keys), you need to authorize with the **Internal API Admin Key** you set in your `.env` file.
+2.  **Authorize Your Swagger UI Session (for Admin Operations):**
+    To access administrative endpoints (like generating new client-facing API keys), you need to authorize your Swagger UI session with the admin user credentials you created in **Section 4.1**.
     *   Click the green **"Authorize"** button (usually at the top right).
-    *   In the dialog, find the `X-API-Key (apiKey)` section.
-    *   Enter the exact value of your `API_KEY` from your project's root `.env` file into the "Value" field.
-    *   Click "Authorize" and then "Close".
+    *   In the pop-up dialog, locate the `OAuth2PasswordBearer (OAuth2, password)` section.
+    *   Enter the `username` and `password` of the admin user you created via `create_admin_user.py`.
+    *   Click **"Authorize"** within this section of the dialog.
+    *   Click **"Close"** on the pop-up.
+    *   The padlock icon next to the main "Authorize" button should now appear "locked," indicating your session is authorized for admin operations.
 
-3.  **Step 2: Create an Admin User (First Time Only):**
-    This user will be able to log in and generate client-facing API keys.
-    *   Expand the **"Admin"** section in the Swagger UI.
-    *   Find the `POST /admin/users/` endpoint.
-    *   Click "Try it out".
-    *   In the "Request body" (JSON format), enter a username and a strong password for your admin user.
-        ```json
-        {
-          "username": "admin",
-          "password": "your_strong_admin_password"
-        }
-        ```
-    *   Click "Execute". A `200` response means the user was created.
-
-4.  **Step 3: Log In as Admin User & Get an Access Token:**
-    You'll use this token to authorize yourself for the next step (generating client-facing API keys).
-    *   Expand the **"Admin"** section again.
-    *   Find the `POST /admin/token` endpoint.
-    *   Click "Try it out".
-    *   Enter the username and password of the admin user you just created.
-    *   Click "Execute".
-    *   The response will contain an `access_token` (a long string starting with `eyJ...`). **Copy this entire token string.**
-
-5.  **Step 4: Authorize with the Access Token (for generating client keys):**
-    This authorizes your Swagger UI session to generate client-facing API keys on behalf of the admin user.
-    *   Click the green **"Authorize"** button again.
-    *   In the dialog, in the `Bearer (apiKey)` section, type `Bearer ` (with a space after "Bearer") and then paste the `access_token` you copied.
-    *   Click "Authorize" and then "Close".
-
-6.  **Step 5: Generate a Client-Facing API Key (for your Frontend/Clients):**
+3.  **Generate a Client-Facing API Key (for your Frontend/Clients):**
     This key is what your frontend or other applications will use to access the data endpoints.
-    *   Expand the **"Admin"** section.
+    *   Expand the **"Admin"** section in the Swagger UI.
     *   Find the `POST /admin/keys/` endpoint.
     *   Click "Try it out".
-    *   In the "Request body", provide a name for this new API key (e.g., `{"name": "my-frontend-app-key"}`).
+    *   In the "Request body", provide a descriptive `name` for this new API key (e.g., `{"name": "my-frontend-app-key"}`).
     *   Click "Execute".
-    *   The response will show your new **Client-Facing API Key** (e.g., `prefix_secret_string`). **Copy this entire key! This is the key you will provide to your frontend or other data consumers.** It will not be shown again!
+    *   The response will show your new **Client-Facing API Key** (e.g., `p2p_abcdefgh_ijklmnopqrstuv`). **Copy this entire key IMMEDIATELY! It will NOT be shown again for security reasons.** Save it securely for use in your client applications.
 
 ## 7. Next Steps: Connecting a Frontend (Optional)
 
@@ -155,6 +141,6 @@ python -m pytest
     *   Ensure the client-facing API key you're using was generated in Section 6, Step 5.
     *   Remember the format for clients: `X-API-Key: your_generated_client_key`.
     *   Ensure the generated client keys are active in the database.
-*   **Database Tables Missing:** If `users`, `api_keys`, or `runs` tables are missing, ensure `alembic upgrade head` was run successfully (Section 4.1). If dimensional tables (`dim_`, `fact_`) are missing, ensure your `worker/` application has run and populated the database.
+*   **Database Tables Missing:** The API automatically creates its required tables (`users`, `api_keys`, `runs`) on its first run (Section 5). If these tables are missing after running the API, check the API server logs for database connection errors. `alembic upgrade head` is used for applying *migrations* (schema changes), not for initial table creation. If dimensional tables (`dim_`, `fact_`) are missing, ensure your `worker/` application has run and populated the database.
 
 ---

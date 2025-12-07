@@ -4,9 +4,19 @@ Reads from environment variables, no imports from p2p_api.
 """
 import os
 import json
-import os
+from pathlib import Path
 from typing import Optional
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
+
+# Explicitly load the .env file from the project root
+# The current file is in C:\Users\DELL\Desktop\dashboards\worker\config.py
+# The .env file is in C:\Users\DELL\Desktop\dashboards
+env_path = Path(__file__).parent.parent / ".env"
+if env_path.exists():
+    load_dotenv(dotenv_path=env_path)
+else:
+    print(f"Warning: .env file not found at {env_path}")
 
 
 class WorkerSettings(BaseSettings):
@@ -37,8 +47,6 @@ class WorkerSettings(BaseSettings):
                 self._p2p_config = json.load(f)
         return self._p2p_config
 
-
-
     # Extraction
     extraction_interval_minutes: int = 10
     max_workers: int = 20
@@ -54,8 +62,7 @@ class WorkerSettings(BaseSettings):
     log_level: str = "INFO"
 
     class Config:
-        env_file = ".env"
-        env_prefix = "WORKER_" # All env vars start with WORKER_
+        env_prefix = "WORKER_"  # All env vars start with WORKER_
         extra = 'ignore'
 
 # Global settings instance

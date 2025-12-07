@@ -24,14 +24,11 @@ from worker.models import (
 )
 
 
-engine = None
-SessionLocal = None
-
-
 def init_db(database_url: str):
-    """Initialize database engine and session factory for PostgreSQL."""
-    global engine, SessionLocal
-
+    """
+    Initialize database engine and session factory for PostgreSQL.
+    This function now returns a new engine and sessionmaker instance.
+    """
     if not database_url:
         raise ValueError("DATABASE_URL environment variable not set.")
 

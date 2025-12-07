@@ -6,7 +6,7 @@ from decimal import Decimal # Import Decimal for price filters
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse
-from fastapi.security import APIKeyHeader, HTTPBearer # Import HTTPBearer
+from fastapi.security import APIKeyHeader, HTTPBearer
 from sqlalchemy.orm import Session
 
 from . import (
@@ -21,13 +21,14 @@ from .config import Settings
 from .database import Base, init_db # Base is now from worker.models
 # from .exceptions import ScraperError # ScraperError will be removed or repurposed
 from .logging_config import setup_logging
-from .dependencies import get_db, set_session_local
+from .dependencies import get_db
 from .auth import pwd_context
 
 logger = logging.getLogger(__name__)
 
 api_key_header = APIKeyHeader(name="X-API-Key")
-bearer_scheme = HTTPBearer() # Define the HTTPBearer scheme
+bearer_scheme = HTTPBearer()
+
 
 _engine = None
 _SessionLocal = None
@@ -49,7 +50,9 @@ async def lifespan(app: FastAPI):
     global_settings = Settings() # Settings from Api/p2p_api/config.py
     if not global_settings.testing:
         configure_database(global_settings.database_url)
-        set_session_local(_SessionLocal)
+        app.state.engine = _engine
+        app.state.SessionLocal = _SessionLocal
+
         # --- Base.metadata.create_all (removed for API, as worker manages schema) ---
         # The worker is responsible for creating/managing the database schema.
         # This API is read-only from that database. If API specific tables (users/api_keys/runs)
@@ -126,6 +129,7 @@ app = FastAPI(
             {"X-API-Key": []}
         ]
     }
+
 )
 
 
