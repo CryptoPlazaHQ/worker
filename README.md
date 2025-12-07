@@ -1,58 +1,73 @@
-# P2P Data Ingestion Worker
+# P2P Financial Data Platform
 
-## Introduction
+## 1. Project Overview
 
-This document provides instructions on how to deploy and run the P2P data ingestion worker. The worker extracts data from Binance P2P and loads it into a PostgreSQL database.
+This project is a comprehensive platform for collecting, storing, and analyzing peer-to-peer (P2P) financial data. It consists of three main components:
 
-## Prerequisites
+- **P2P Data Ingestion Worker**: A robust worker responsible for extracting P2P data from external sources (e.g., Binance) and loading it into a central PostgreSQL database.
+- **FastAPI Backend (API)**: A powerful API built with FastAPI that serves the collected data, provides endpoints for data analysis, and handles user authentication.
+- **Streamlit Dashboard**: An interactive web application built with Streamlit that allows users to visualize data, explore API endpoints, and monitor platform activity.
+
+The project is designed to be modular and scalable, allowing for the easy addition of new data sources, API endpoints, and dashboard features.
+
+## 2. Prerequisites
 
 - Python 3.12
 - PostgreSQL database
-- `.venv` virtual environment
-- Required Python packages (see `requirements.txt`)
+- A Python virtual environment (e.g., `.venv`)
 
-## Deployment
+## 3. Setup and Installation
 
-### 1. Clone the repository
+### 3.1. Clone the Repository
 
 ```bash
 git clone <repository_url>
 cd <repository_directory>
 ```
 
-### 2. Setup and Activate Python Virtual Environment
+### 3.2. Setup and Activate Python Virtual Environment
 
-Create and activate a Python 3.12 virtual environment from the **project root directory**:
+Create and activate a Python 3.12 virtual environment from the project's root directory:
 
 ```bash
-# Ensure you are in the project root: C:\Users\DELL\Desktop\dashboards
+# Ensure you are in the project root (e.g., C:\Users\DELL\Desktop\dashboards)
 py -3.12 -m venv .venv
 
+# Activate the environment
 # On Windows:
-.\\.venv\Scripts\activate
-
+.\.venv\Scripts\activate
 # On macOS/Linux:
 source .venv/bin/activate
 ```
-(Your terminal prompt should now show `(.venv)` at the beginning, indicating the environment is active.)
+Your terminal prompt should now be prefixed with `(.venv)`, indicating that the virtual environment is active.
 
-## 3. Install Dependencies
+### 3.3. Install Dependencies
 
-With the virtual environment active, install all required Python packages for both the worker and API:
+With the virtual environment active, install all required Python packages for the worker, API, and Streamlit app:
 
 ```bash
-# Ensure you are in the project root: C:\Users\DELL\Desktop\dashboards
+# Ensure you are in the project root
 pip install -r requirements.txt
 pip install -r Api/requirements.txt
+pip install -r streamlit_app/requirements.txt
 ```
 
-### 5. Configure the worker
+### 3.4. Configure Environment Variables
 
-Create a `.env` file in the root directory with the following variables:
+Create a `.env` file in the project's root directory by copying the template:
+
+```bash
+cp .env.template .env
+```
+
+Now, edit the `.env` file and provide the necessary configuration values, such as your database connection URL and other sensitive settings:
 
 ```env
 # Database
 WORKER_DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/<database>
+
+# API Secret Key (important for security)
+SECRET_KEY=your_super_secret_key_here
 
 # Rate Limiting
 WORKER_RATE_LIMIT_REQUESTS_PER_MINUTE=100
@@ -65,40 +80,56 @@ WORKER_MAX_WORKERS=20
 WORKER_LOG_LEVEL=INFO
 ```
 
-Replace the placeholders with your actual values.
+## 4. Running the Platform
 
+This platform consists of three services that can be run independently: the API, the Worker, and the Streamlit Dashboard.
 
+### 4.1. Initialize the Database and Run the API
 
-## 6. Run the Worker (and Initial Database Setup)
+The FastAPI application is the primary entry point for initializing the database schema and running the backend services.
 
-The worker needs the database schema to be created before it can operate. The `run_api.py` script (located in the project root) is responsible for this initial database schema creation for all models.
-
-First, ensure the database schema is initialized by running the API startup script *once*:
+To start the API, run the following command from the project root:
 
 ```bash
-# Ensure you are in the project root: C:\Users\DELL\Desktop\dashboards
+# This will start the FastAPI server and automatically create database tables
 python run_api.py
-# You can stop this process after it logs "Checking and creating tables if they don't exist..." and no errors occur.
-# Or, keep it running in a separate terminal if you intend to use the API.
 ```
 
-Once the database schema is created (or if the API is already running), you can start the worker:
+The API will be accessible at `http://127.0.0.1:8000`, and the interactive API documentation (Swagger UI) can be found at `http://127.0.0.1:8000/docs`.
+
+**Note**: The first time you run this command, it will create all the necessary tables in the database. You can keep this process running in a terminal to serve API requests.
+
+### 4.2. Run the P2P Data Ingestion Worker
+
+Once the database is initialized and the API is running, you can start the data ingestion worker. The worker will continuously extract data from P2P platforms and store it in the database.
+
+Open a **new terminal**, activate the virtual environment, and run the following command:
 
 ```bash
-# Ensure your virtual environment is active and you are in the project root
+# Ensure your virtual environment is active
 python -m worker.main
 ```
 
-The worker will start extracting data from Binance P2P and loading it into the PostgreSQL database.
+The worker will now run in the background, populating the database with fresh data.
 
-## 7. Monitoring
+### 4.3. Run the Streamlit Dashboard
 
-The worker exposes Prometheus metrics on port 9090. You can use Prometheus to monitor the worker's performance.
+To explore the data and interact with the platform, you can use the Streamlit dashboard.
 
-## 8. Logging
+Open another **new terminal**, activate the virtual environment, and run the following command:
 
-The worker uses the logging module to log events. The log level can be configured using the `WORKER_LOG_LEVEL` environment variable.
+```bash
+# Ensure your virtual environment is active and you are in the project root
+streamlit run streamlit_app/app.py
+```
 
-## 9. Contributing
+The Streamlit application will be available at the local URL displayed in your terminal (usually `http://localhost:8501`).
 
-Contributions are welcome! Please submit a pull request with your changes.
+## 5. Monitoring and Logging
+
+- **API**: The FastAPI backend provides structured logging. Check the terminal where the API is running for real-time logs.
+- **Worker**: The worker uses Prometheus for metrics, which are exposed on port 9090. You can configure a Prometheus instance to scrape these metrics for monitoring. The worker's log level can be set via the `WORKER_LOG_LEVEL` environment variable.
+
+## 6. Contributing
+
+Contributions are welcome! Please create a feature branch, make your changes, and submit a pull request. We appreciate your help in making this platform better.
