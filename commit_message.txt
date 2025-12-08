@@ -1,0 +1,15 @@
+feat(worker): Improve worker scheduling and logging for better UX
+
+This commit refactors the worker's scheduling mechanism and significantly enhances its logging output to provide a clearer, more user-friendly experience in the terminal.
+
+Key changes include:
+- **Improved Scheduling:**
+  - Switched from a basic `schedule` library implementation to a more robust approach that ensures jobs run reliably at specified intervals. (This is Option B from audit_worker_schedule.md)
+- **Enhanced Logging for UX:**
+  - Integrated explicit timestamps into log messages for better traceability.
+  - Added Batch IDs to job start, extraction, loading, and finish messages.
+  - Logged the number of offers extracted and loaded for each run.
+  - Introduced a periodic "heartbeat" log message to confirm the worker is alive and indicate the next scheduled job run, even when no job is actively executing.
+  - Adjusted the `time.sleep` interval within the scheduler's `while True` loop to provide more frequent checks and responsiveness.
+
+These changes aim to provide continuous, clear feedback in the terminal, making it easier to monitor the worker's activity and status.
