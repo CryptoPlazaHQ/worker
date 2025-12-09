@@ -243,7 +243,7 @@ class DataLoader:
             )
             fact_objects.append(fact)
             
-        session.bulk_save_objects(fact_objects)
+        session.bulk_save_objects(fact_objects, return_defaults=True)
         session.flush() # Flush to get offer_id for bridge table
 
         for fact in fact_objects:

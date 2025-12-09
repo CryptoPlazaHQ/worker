@@ -1,4 +1,5 @@
 import datetime
+import uuid
 from decimal import Decimal
 from typing import List, Optional
 
@@ -56,7 +57,7 @@ class Offer(BaseModel):
     # Maps to FactOffers with joined dimensions
     offer_id: int # Primary Key of the snapshot
     offer_external_id: str # Binance's advNo
-    batch_id: str # UUID will be string
+    batch_id: uuid.UUID # Changed to UUID
     extraction_timestamp: datetime.datetime
     trade_type: str # "BUY" or "SELL"
     price: Decimal
@@ -71,10 +72,10 @@ class Offer(BaseModel):
     terms_conditions: Optional[str] = None
     is_available: bool
 
-    # Nested dimensional models
-    cryptocurrency: Cryptocurrency
-    fiat_currency: FiatCurrency
-    advertiser: Advertiser
+    # Nested dimensional models made optional
+    cryptocurrency: Optional[Cryptocurrency] = None
+    fiat_currency: Optional[FiatCurrency] = None
+    advertiser: Optional[Advertiser] = None
     # Note: payment_methods will be fetched via a separate join or relationship in CRUD
 
     model_config = ConfigDict(from_attributes=True)

@@ -99,6 +99,18 @@ class FactOffers(Base):
     terms_conditions = Column(Text)
     is_available = Column(Boolean, default=True)
     created_at = Column(DateTime, default=func.now())
+    
+    # Relationships
+    cryptocurrency = relationship("DimCryptocurrencies")
+    fiat_currency = relationship("DimFiatCurrencies")
+    advertiser = relationship("DimAdvertisers")
+    payment_methods = relationship(
+        "DimPaymentMethods",
+        secondary="fact_offer_payment_methods",
+        primaryjoin="and_(FactOffers.offer_id == FactOfferPaymentMethods.offer_id, FactOffers.extraction_timestamp == FactOfferPaymentMethods.extraction_timestamp)",
+        secondaryjoin="DimPaymentMethods.payment_method_id == FactOfferPaymentMethods.payment_method_id",
+        viewonly=True,  # Important for complex secondary relationships
+    )
     __table_args__ = (
         CheckConstraint(trade_type.in_(['BUY', 'SELL'])),
         Index('idx_offers_batch', 'batch_id'),
